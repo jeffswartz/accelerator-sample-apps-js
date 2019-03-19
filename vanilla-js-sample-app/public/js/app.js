@@ -2,6 +2,11 @@
 
 let otCore;
 const options = {
+  credentials: {
+    apiKey: '472032',
+    sessionId: '2_MX40NzIwMzJ-fjE1NTI5NDA4NDE0Mzh-dnFQaDRKbDlaOGRpWjlXMTBzWmZFdmYxfn4',
+    token: 'T1==cGFydG5lcl9pZD00NzIwMzImc2lnPWViODQ0YmQ3YWVkZWIzYWM1YzVhZDQ1MjE5NDIxNjlhYzI2MTQ5ZTk6c2Vzc2lvbl9pZD0yX01YNDBOekl3TXpKLWZqRTFOVEk1TkRBNE5ERTBNemgtZG5GUWFEUktiRGxhT0dScFdqbFhNVEJ6V21aRmRtWXhmbjQmY3JlYXRlX3RpbWU9MTU1Mjk0MDg1OCZub25jZT0wLjk0NjIyNDU2Mzc5MjExOTQmcm9sZT1tb2RlcmF0b3ImZXhwaXJlX3RpbWU9MTU1NTUzMjg1NyZpbml0aWFsX2xheW91dF9jbGFzc19saXN0PQ==',
+  },
   // A container can either be a query selector or an HTMLElement
   // eslint-disable-next-line no-unused-vars
   streamContainers: function streamContainers(pubSub, type, data) {
@@ -58,27 +63,30 @@ const app = function() {
    * Update the size and position of video containers based on the number of
    * publishers and subscribers specified in the meta property returned by otCore.
    */
-  const updateVideoContainers = () => {
-    const { meta } = state;
+  const updateVideoContainers = function() {
+    const meta = state.meta;
     const sharingScreen = meta ? !!meta.publisher.screen : false;
     const viewingSharedScreen = meta ? meta.subscriber.screen : false;
     const activeCameraSubscribers = meta ? meta.subscriber.camera : 0;
 
-    const videoContainerClass = `App-video-container ${(sharingScreen || viewingSharedScreen) ? 'center' : ''}`;
+    const videoContainerClass = 'App-video-container ' + (sharingScreen || viewingSharedScreen) ? 'center' : '';
     document.getElementById('appVideoContainer').setAttribute('class', videoContainerClass);
 
     const cameraPublisherClass =
-      `video-container ${!!activeCameraSubscribers || sharingScreen ? 'small' : ''} ${!!activeCameraSubscribers || sharingScreen ? 'small' : ''} ${sharingScreen || viewingSharedScreen ? 'left' : ''}`;
+      'video-container '  + !!activeCameraSubscribers || sharingScreen ? 'small ' : ' '
+        + !!activeCameraSubscribers || sharingScreen ? 'small ' : ' '
+        + sharingScreen || viewingSharedScreen ? 'left' : '';
     document.getElementById('cameraPublisherContainer').setAttribute('class', cameraPublisherClass);
 
-    const screenPublisherClass = `video-container ${!sharingScreen ? 'hidden' : ''}`;
+    const screenPublisherClass = 'video-container ' + !sharingScreen ? 'hidden' : '';
     document.getElementById('screenPublisherContainer').setAttribute('class', screenPublisherClass);
 
-    const cameraSubscriberClass =
-      `video-container ${!activeCameraSubscribers ? 'hidden' : ''} active-${activeCameraSubscribers} ${viewingSharedScreen || sharingScreen ? 'small' : ''}`;
+    const cameraSubscriberClass = 'video-container '
+      + (!activeCameraSubscribers ? 'hidden active-' : ' active-')
+      + activeCameraSubscribers + ' ' + viewingSharedScreen || sharingScreen ? 'small' : '';
     document.getElementById('cameraSubscriberContainer').setAttribute('class', cameraSubscriberClass);
 
-    const screenSubscriberClass = `video-container ${!viewingSharedScreen ? 'hidden' : ''}`;
+    const screenSubscriberClass = 'video-container ' + !viewingSharedScreen ? 'hidden' : '';
     document.getElementById('screenSubscriberContainer').setAttribute('class', screenSubscriberClass);
   };
 
@@ -87,8 +95,9 @@ const app = function() {
    * Update the UI
    * @param {String} update - 'connected', 'active', or 'meta'
    */
-  const updateUI = (update) => {
-    const { connected, active } = state;
+  const updateUI = function(update) {
+    const connected = state.connected;
+    const active = state.active;
 
     switch (update) {
       case 'connected':
@@ -117,7 +126,9 @@ const app = function() {
    */
   const updateState = function(updates) {
     Object.assign(state, updates);
-    Object.keys(updates).forEach(update => updateUI(update));
+    Object.keys(updates).forEach(function(update) {
+      return updateUI(update);
+    });
   };
 
   /**
@@ -125,8 +136,8 @@ const app = function() {
    */
   const startCall = function() {
     otCore.startCall()
-      .then(function({ publishers, subscribers, meta }) {
-        updateState({ publishers, subscribers, meta, active: true });
+      .then(function(obj) {
+        updateState({ publishers: obj.publishers, subscribers: obj.subscribers, meta: obj.meta, active: true });
       }).catch(function(error) { console.log(error); });
   };
 
@@ -164,9 +175,11 @@ const app = function() {
       'startScreenShare',
       'endScreenShare',
     ];
-    events.forEach(event => otCore.on(event, ({ publishers, subscribers, meta }) => {
-      updateState({ publishers, subscribers, meta });
-    }));
+    events.forEach(function(event) {
+      return otCore.on(event, function(obj) {
+        updateState({ publishers: obj.publishers, subscribers: obj.subscribers, meta: obj.meta });
+      });
+    });
 
     document.getElementById('start').addEventListener('click', startCall);
     document.getElementById('toggleLocalAudio').addEventListener('click', toggleLocalAudio);
